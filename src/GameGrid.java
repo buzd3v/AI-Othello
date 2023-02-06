@@ -7,8 +7,8 @@ public class GameGrid extends Rectangle {
     /*
      * grid 
      */
-    private Grid[][] grid;
-
+    public Grid[][] grid;
+    private GameMap gmap;
     /*
      * list of available move
      */
@@ -18,8 +18,9 @@ public class GameGrid extends Rectangle {
      * create a grid of gridcell 
      */
 
-    public GameGrid(Position position, int width, int height) {
+    public GameGrid(Position position, int width, int height,GameMap gmap) {
         super(position, width, height);
+        this.gmap = gmap;
         grid = new Grid[GlobalVar.gridWidth][GlobalVar.gridHeight];
         int cellWidth = GlobalVar.UNIT;
         int cellHeight = GlobalVar.UNIT;
@@ -28,6 +29,7 @@ public class GameGrid extends Rectangle {
             for (int j = 0; j < GlobalVar.gridHeight; j++) {
                 grid[i][j] = new Grid(new Position(position.x + cellWidth * i, position.y + cellHeight * j),
                         cellWidth, cellHeight);
+                grid[i][j].setGameMap(gmap);
             }
         }
         grid[3][3].setCellState(1);
@@ -121,6 +123,30 @@ public class GameGrid extends Rectangle {
             return 3;
         else
             return counts[1] > counts[2] ? 1 : 2;
+    }
+
+    public int getNumberOfBlack() {
+        int count = 0;
+        for (int i = 0; i < GlobalVar.gridWidth; i++) {
+            for (int j = 0; j < GlobalVar.gridHeight; j++) {
+                if (grid[i][j].getCellState() == 2) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    public int getNumberOfWhite() {
+        int count = 0;
+        for (int i = 0; i < GlobalVar.gridWidth; i++) {
+            for (int j = 0; j < GlobalVar.gridHeight; j++) {
+                if (grid[i][j].getCellState() == 1) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
     /*
      * draw grid lines and map and all the contents
