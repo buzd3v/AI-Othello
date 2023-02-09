@@ -2,6 +2,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class GameGrid extends Rectangle {
     /*
@@ -9,6 +10,8 @@ public class GameGrid extends Rectangle {
      */
     public Grid[][] grid;
     private GameMap gmap;
+    public Grid[][] preGrid;
+    public Stack<Grid[][]> stackOfPre;
     /*
      * list of available move
      */
@@ -18,10 +21,13 @@ public class GameGrid extends Rectangle {
      * create a grid of gridcell 
      */
 
-    public GameGrid(Position position, int width, int height,GameMap gmap) {
+    public GameGrid(Position position, int width, int height, GameMap gmap) {
+
         super(position, width, height);
         this.gmap = gmap;
+        stackOfPre = new Stack<>();
         grid = new Grid[GlobalVar.gridWidth][GlobalVar.gridHeight];
+        preGrid = new Grid[GlobalVar.gridWidth][GlobalVar.gridHeight];
         int cellWidth = GlobalVar.UNIT;
         int cellHeight = GlobalVar.UNIT;
 
@@ -41,11 +47,19 @@ public class GameGrid extends Rectangle {
          */
         validMoves = new ArrayList<>();
         updateValidMoves(2);
-        
+
     }
+
     /*
      * reset all the cell
      */
+    public void copy(Grid[][] grid, Grid[][] clone) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                clone[i][j] = new Grid(grid[i][j]);
+            }
+        }
+    }
     public void reset() {
         for (int i = 0; i < GlobalVar.gridWidth; i++) {
             for (int j = 0; j < GlobalVar.gridHeight; j++) {
@@ -76,6 +90,10 @@ public class GameGrid extends Rectangle {
      */
 
     public void playMove(Position position, int player) {
+        Grid[][] temp = new Grid[8][8];
+        copy(grid, temp);
+        stackOfPre.push(temp);
+        System.out.println("size of stack is: " +stackOfPre.size());
         grid[position.x][position.y].setCellState(player);
         List<Position> changeCellPos = getChangedPositionsForMove(position, player);
         for (Position s : changeCellPos) {
@@ -84,6 +102,11 @@ public class GameGrid extends Rectangle {
         updateValidMoves(player==1?2:1);
     } 
 
+    public void undoMove(int player) {
+        copy(stackOfPre.pop(), grid);
+        System.out.println("size of stack is: " +stackOfPre.size());
+        updateValidMoves(player);
+    }
     /*
      * convert mouse pos to grid pos
      */
