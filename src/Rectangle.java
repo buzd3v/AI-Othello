@@ -28,6 +28,12 @@ public class Rectangle {
         this(new Position(x, y), width, height);
     }
 
+    public Rectangle(Rectangle another) {
+        this.position.x = another.position.x;
+        this.position.y = another.position.y;
+        this.width = another.width;
+        this.height = another.height;
+    }
     /*
      * get the height, width, position
      */

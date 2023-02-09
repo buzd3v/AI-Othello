@@ -20,10 +20,13 @@ public class GameMap extends JPanel implements MouseListener {
         
         this.gameMenu = gameMenu;
 
-        gameGrid = new GameGrid(new Position(0, 0), GlobalVar.WIDTH, GlobalVar.HEIGHT,this);
+        gameGrid = new GameGrid(new Position(0, 0), GlobalVar.WIDTH, GlobalVar.HEIGHT);
+        gameGrid.init();
         ai = new AI(gameGrid,this);
         setGameState(GameState.BTurn);
         addMouseListener(this);
+        System.out.println("Black's valid move: " + gameGrid.getAllValidMoves());
+
     }
 
     @Override
@@ -139,14 +142,14 @@ public class GameMap extends JPanel implements MouseListener {
         if (arg0.getButton() == MouseEvent.BUTTON1) {
             if (gameState == GameState.WTurn || gameState == GameState.BTurn) {
                 Position p = gameGrid.convertMousePosition(new Position(arg0.getX(), arg0.getY()));
-                System.out.println(p.toString());
+                System.out.println("Black's Move " + p);
                 play(p);
                 testForEndGame(true);
                 gameMenu.updateStatus();
 
                 while (gameState == GameState.WTurn) {
                     Position pai = ai.choseMove();
-                    System.out.println(pai);
+                    //System.out.println(pai);
                     play(pai);
                     testForEndGame(true);
                     gameMenu.updateStatus();

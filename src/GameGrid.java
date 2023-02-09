@@ -9,7 +9,7 @@ public class GameGrid extends Rectangle {
      * grid 
      */
     public Grid[][] grid;
-    private GameMap gmap;
+    
     public Grid[][] preGrid;
     public Stack<Grid[][]> stackOfPre;
     /*
@@ -21,10 +21,10 @@ public class GameGrid extends Rectangle {
      * create a grid of gridcell 
      */
 
-    public GameGrid(Position position, int width, int height, GameMap gmap) {
+    public GameGrid(Position position, int width, int height) {
 
         super(position, width, height);
-        this.gmap = gmap;
+        
         stackOfPre = new Stack<>();
         grid = new Grid[GlobalVar.gridWidth][GlobalVar.gridHeight];
         preGrid = new Grid[GlobalVar.gridWidth][GlobalVar.gridHeight];
@@ -35,9 +35,15 @@ public class GameGrid extends Rectangle {
             for (int j = 0; j < GlobalVar.gridHeight; j++) {
                 grid[i][j] = new Grid(new Position(position.x + cellWidth * i, position.y + cellHeight * j),
                         cellWidth, cellHeight);
-                grid[i][j].setGameMap(gmap);
+
             }
         }
+        validMoves = new ArrayList<>();
+        
+        
+    }
+
+    public void init() {
         grid[3][3].setCellState(1);
         grid[3][4].setCellState(2);
         grid[4][3].setCellState(2);
@@ -45,11 +51,9 @@ public class GameGrid extends Rectangle {
         /*
          * cccccccccc
          */
-        validMoves = new ArrayList<>();
         updateValidMoves(2);
 
     }
-
     /*
      * reset all the cell
      */
@@ -93,7 +97,6 @@ public class GameGrid extends Rectangle {
         Grid[][] temp = new Grid[8][8];
         copy(grid, temp);
         stackOfPre.push(temp);
-        System.out.println("size of stack is: " +stackOfPre.size());
         grid[position.x][position.y].setCellState(player);
         List<Position> changeCellPos = getChangedPositionsForMove(position, player);
         for (Position s : changeCellPos) {
@@ -104,7 +107,6 @@ public class GameGrid extends Rectangle {
 
     public void undoMove(int player) {
         copy(stackOfPre.pop(), grid);
-        System.out.println("size of stack is: " +stackOfPre.size());
         updateValidMoves(player);
     }
     /*
