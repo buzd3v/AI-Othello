@@ -1,3 +1,5 @@
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import java.awt.Window;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -6,7 +8,8 @@ import javax.swing.JFrame;
 
 public class GameWindow extends JFrame implements KeyListener{
 
-    private GameMap gMap = new GameMap();
+    private GameMenu gameMenu = new GameMenu();
+    private GameMap gameMap = new GameMap(gameMenu);
     public GameWindow() {
         super();
     }
@@ -14,13 +17,14 @@ public class GameWindow extends JFrame implements KeyListener{
     public GameWindow(String title) {
         
         super();
-        
+        gameMenu.setGameMap(gameMap);
         this.setTitle(title);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setResizable(false);
         this.setLocationRelativeTo(null);
-        
-        this.add(gMap);
+        this.setLayout(new BorderLayout());
+        this.add(gameMap,BorderLayout.LINE_START);
+        this.add(gameMenu, BorderLayout.LINE_END);
 
         this.pack();
         this.addKeyListener(this);
@@ -31,8 +35,8 @@ public class GameWindow extends JFrame implements KeyListener{
     public void keyPressed(KeyEvent arg0) {
         // TODO Auto-generated method stub
         if (arg0.getKeyCode() == KeyEvent.VK_ESCAPE) {
-            gMap.restart();
-            gMap.repaint();
+            gameMap.restart();
+            gameMap.repaint();
         }
         
     }

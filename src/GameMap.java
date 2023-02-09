@@ -8,16 +8,18 @@ import java.awt.event.MouseListener;
 import javax.swing.JPanel;
 
 public class GameMap extends JPanel implements MouseListener {
-    private GameGrid gameGrid;
-    private String gameStateStr;
+    public GameGrid gameGrid;
+    public String gameStateStr;
     private AI ai;
-    
+    private GameMenu gameMenu;
 
     public GameState gameState;
-    public GameMap(){
+    public GameMap(GameMenu gameMenu){
         setPreferredSize(new Dimension(GlobalVar.WIDTH, GlobalVar.HEIGHT));
         setBackground(Color.LIGHT_GRAY);
         
+        this.gameMenu = gameMenu;
+
         gameGrid = new GameGrid(new Position(0, 0), GlobalVar.WIDTH, GlobalVar.HEIGHT,this);
         ai = new AI(gameGrid,this);
         setGameState(GameState.BTurn);
@@ -65,6 +67,7 @@ public class GameMap extends JPanel implements MouseListener {
             gameGrid.undoMove(1);
             setGameState(GameState.WTurn);
         }
+        gameMenu.updateStatus();
     }
     private void setGameState(GameState newState) {
         gameState = newState;
@@ -138,16 +141,20 @@ public class GameMap extends JPanel implements MouseListener {
                 Position p = gameGrid.convertMousePosition(new Position(arg0.getX(), arg0.getY()));
                 System.out.println(p.toString());
                 play(p);
-
                 testForEndGame(true);
-                while (gameState == GameState.WTurn ) {
+                gameMenu.updateStatus();
+
+                while (gameState == GameState.WTurn) {
                     Position pai = ai.choseMove();
                     System.out.println(pai);
                     play(pai);
                     testForEndGame(true);
+                    gameMenu.updateStatus();
+
                 }
+                repaint();
             }
-            repaint();
+            
         }
         if (arg0.getButton() == MouseEvent.BUTTON3) {
             undo();

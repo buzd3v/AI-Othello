@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class AI {
@@ -17,7 +15,7 @@ public class AI {
         List<Position> moves = gameGrid.getAllValidMoves();
         for (int i = 0; i < moves.size(); i++) {
             gameMap.play(moves.get(i));
-            int score = minimax(0, false, Integer.MIN_VALUE, Integer.MAX_VALUE);
+            int score = minimax(0, false);
             gameMap.undo();
             if (score > bestScore) {
                 bestScore = score;
@@ -32,11 +30,11 @@ public class AI {
      * @param isMaximizing : true if maximize the value, false if minimize the opponent value
      * @param alpha maximum score
      * @param beta minimum score of opponent
-     * 
-     * return the score of best move
+     *
+     * @return the score of best move
      */
-    private int minimax(int depth, boolean isMaximizing, int alpha, int beta) {
-        if (depth == 4) {
+    private int minimax(int depth, boolean isMaximizing) {
+        if (depth == 4 || gameGrid.getAllValidMoves().size() == 0) {
             return gameGrid.getNumberOfWhite() - gameGrid.getNumberOfBlack();
         }
         if (isMaximizing) {
@@ -44,13 +42,10 @@ public class AI {
             List<Position> moves = gameGrid.getAllValidMoves();
             for (int i = 0; i < moves.size(); i++) {
                 gameMap.play(moves.get(i));
-                int val = minimax(depth + 1, true, alpha, beta);
+                int val = minimax(depth + 1, false);
                 gameMap.undo();
                 maxVal = Math.max(maxVal, val);
-                beta = Math.max(alpha, maxVal);
-                if (beta <= alpha) {
-                    break;
-                }
+                
             }
             return maxVal;
         } else {
@@ -58,19 +53,11 @@ public class AI {
             List<Position> moves = gameGrid.getAllValidMoves();
             for (int i = 0; i < moves.size(); i++) {
                 gameMap.play(moves.get(i));
-                int val = minimax(depth + 1, true, alpha, beta);
+                int val = minimax(depth + 1, true);
                 gameMap.undo();
                 minVal = Math.min(minVal, val);
-                beta = Math.min(beta, minVal);
-                if (beta <= alpha) {
-                    break;
-                }
             }
             return minVal;
         }
-
     }
-
-    
-    
 }
