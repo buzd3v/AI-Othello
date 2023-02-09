@@ -11,17 +11,15 @@ public class GameMap extends JPanel implements MouseListener {
     private GameGrid gameGrid;
     private String gameStateStr;
     private AI ai;
-    public enum GameState {
-        WTurn, BTurn,BWin, WWin, Draw
-    };
+    
 
-    GameState gameState;
+    public GameState gameState;
     public GameMap(){
         setPreferredSize(new Dimension(GlobalVar.WIDTH, GlobalVar.HEIGHT));
         setBackground(Color.LIGHT_GRAY);
         
-        gameGrid = new GameGrid(new Position(0, 0), GlobalVar.WIDTH, GlobalVar.HEIGHT);
-        ai = new AI(gameGrid);
+        gameGrid = new GameGrid(new Position(0, 0), GlobalVar.WIDTH, GlobalVar.HEIGHT,this);
+        ai = new AI(gameGrid,this);
         setGameState(GameState.BTurn);
         addMouseListener(this);
     }
@@ -36,10 +34,17 @@ public class GameMap extends JPanel implements MouseListener {
 
     public void restart() {
         gameGrid.reset();
+        setGameState(GameState.BTurn);
+        gameGrid.grid[3][3].setCellState(1);
+        gameGrid.grid[3][4].setCellState(2);
+        gameGrid.grid[4][3].setCellState(2);
+        gameGrid.grid[4][4].setCellState(1);
+        gameGrid.updateValidMoves(2);
+        repaint();
 
     }
     
-    private void play(Position p) {
+    public void play(Position p) {
         // if (!gameGrid.isValidMove(p)) {
         //     return;
         // } else 
@@ -51,7 +56,16 @@ public class GameMap extends JPanel implements MouseListener {
             setGameState(GameState.WTurn);
         }
     }
-    
+
+    public void undo() {
+        if (gameState == GameState.WTurn) {
+            gameGrid.undoMove(2);
+            setGameState(GameState.BTurn);
+        } else if (gameState == GameState.BTurn) {
+            gameGrid.undoMove(1);
+            setGameState(GameState.WTurn);
+        }
+    }
     private void setGameState(GameState newState) {
         gameState = newState;
         switch (gameState) {
@@ -93,6 +107,18 @@ public class GameMap extends JPanel implements MouseListener {
         }
     }
 
+    public GameState getGameState() {
+        return this.gameState;
+    }
+
+    public int getCurrentPlayer() {
+        if (gameState == GameState.WTurn) {
+            return 1;
+        }
+        else {
+            return 2;
+        }
+    }
     
     private void testForEndGame(boolean stillValidMoves) {
         int gameResult = gameGrid.getWinner(stillValidMoves);
@@ -107,24 +133,49 @@ public class GameMap extends JPanel implements MouseListener {
 
     @Override
     public void mousePressed(MouseEvent arg0) {
-        
-        if (gameState == GameState.WTurn || gameState == GameState.BTurn) {
-            Position p = gameGrid.convertMousePosition(new Position(arg0.getX(), arg0.getY()));
-            System.out.println(p.toString());
-            play(p);
-            testForEndGame(true);
-            while (gameState == GameState.WTurn ) {
-                Position pai = ai.choseMove();
-                play(pai);
+        if (arg0.getButton() == MouseEvent.BUTTON1) {
+            if (gameState == GameState.WTurn || gameState == GameState.BTurn) {
+                Position p = gameGrid.convertMousePosition(new Position(arg0.getX(), arg0.getY()));
+                System.out.println(p.toString());
+                play(p);
+
                 testForEndGame(true);
+                while (gameState == GameState.WTurn ) {
+                    Position pai = ai.choseMove();
+                    System.out.println(pai);
+                    play(pai);
+                    testForEndGame(true);
+                }
             }
+            repaint();
         }
-        repaint();
+        if (arg0.getButton() == MouseEvent.BUTTON3) {
+            undo();
+            for (int i = 0; i < 8; i++) {
+                for (int j = 0; j < 8; j++) {
+                    System.out.print(gameGrid.getGrid()[i][j].getCellState());
+                    System.out.print(" ");
+                }
+                System.out.println();
+            }
+            repaint();
+        }
+        
+        
     }
 
     @Override
     public void mouseReleased(MouseEvent arg0) {
         // TODO Auto-generated method stub
+        // undo();
+        // for (int i = 0; i < 8; i++) {
+        //     for (int j = 0; j < 8; j++) {
+        //         System.out.print(gameGrid.getGrid()[i][j].getCellState());
+        //         System.out.print(" ");
+        //     }
+        //     System.out.println();
+        // }
+        // repaint();
 
     }
     @Override
