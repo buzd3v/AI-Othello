@@ -3,7 +3,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-
+import java.util.List;
 
 import javax.swing.JPanel;
 
@@ -12,6 +12,8 @@ public class GameMap extends JPanel implements MouseListener {
     public String gameStateStr;
     private AI ai;
     private GameMenu gameMenu;
+    public float timeToChose = 0;
+    public float timeToChoseAB = 0;
 
     public GameState gameState;
     public GameMap(GameMenu gameMenu){
@@ -148,8 +150,20 @@ public class GameMap extends JPanel implements MouseListener {
                 gameMenu.updateStatus();
 
                 while (gameState == GameState.WTurn) {
+                    float start = System.nanoTime();
                     Position pai = ai.choseMove();
-                    //System.out.println(pai);
+                    float end = System.nanoTime();
+
+                    float s = System.nanoTime();
+                    Position paiAB = ai.choseMoveABPrunning();
+                    float e = System.nanoTime();
+
+                    timeToChoseAB = (e - s) /   1000000000;
+                    timeToChose = (end - start) / 1000000000;
+                    
+                    System.out.println("White's Move by Minimax: " + pai);
+                    System.out.println("White's Move by Minimax with AB Prunning: " + paiAB);
+                    
                     play(pai);
                     testForEndGame(true);
                     gameMenu.updateStatus();
@@ -157,6 +171,7 @@ public class GameMap extends JPanel implements MouseListener {
                 }
                 repaint();
             }
+            // test();
             
         }
         if (arg0.getButton() == MouseEvent.BUTTON3) {
@@ -173,7 +188,46 @@ public class GameMap extends JPanel implements MouseListener {
         
         
     }
+    public void deepCopyGameGrid(GameGrid gr, GameGrid toCopy) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                gr.grid[i][j].setCellState(toCopy.getGrid()[i][j].getCellState());
+            }
+        }
+        
+    }
 
+    public void deepCopyPosition(List<Position> p1, List<Position> toCopy) {
+        int size = toCopy.size();
+        for (int i = 0; i < size; i++) {
+            p1.add(new Position(toCopy.get(i)));
+        }
+    }
+
+    public void test() {
+        GameGrid tempp = new GameGrid(new Position(0, 0), GlobalVar.WIDTH, GlobalVar.HEIGHT);
+        deepCopyGameGrid(tempp, gameGrid);
+        tempp.playMove(new Position(2, 3), 2);
+        tempp.updateValidMoves(1);
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                System.out.print(tempp.stackOfPre.get(0)[i][j].getCellState());
+            }
+            System.out.println(" ");
+        }
+        System.out.println(" ");
+        System.out.println(tempp.stackOfPre.get(0));
+
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                System.out.print(gameGrid.getGrid()[i][j].getCellState());
+            }
+            System.out.println("");
+        }
+
+
+
+    }
     @Override
     public void mouseReleased(MouseEvent arg0) {
         // TODO Auto-generated method stub

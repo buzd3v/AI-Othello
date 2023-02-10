@@ -1,13 +1,10 @@
 import java.util.ArrayList;
 import java.util.List;
-
 public class AI {
     GameGrid gameGrid;
-    GameMap gameMap;
-    Grid[][] gameBoard = new Grid[GlobalVar.gridWidth][GlobalVar.gridHeight];
+
     public AI(GameGrid gameGrid,GameMap gMap) {
         this.gameGrid = gameGrid;
-        gameMap = gMap;
     }
 
     public void deepCopyGameGrid(GameGrid gr, GameGrid toCopy) {
@@ -24,33 +21,14 @@ public class AI {
             p1.add(new Position(toCopy.get(i)));
         }
     }
+
+    public Position choseMoveABPrunning() {
+        return minimaxWithAB(0, true, gameGrid, 1, Integer.MIN_VALUE, Integer.MAX_VALUE).getSecond();
+    }
     public Position choseMove() {
-        Position bestMove = null;
-        int bestScore = Integer.MIN_VALUE;
-        List<Position> moves = new ArrayList<>();
+        System.out.println("White's Posssible Moves: " + gameGrid.getAllValidMoves());
         
-        GameGrid tempGameGrid = new GameGrid(new Position(0, 0), GlobalVar.WIDTH, GlobalVar.HEIGHT);
-        deepCopyGameGrid(tempGameGrid, gameGrid);
-        tempGameGrid.updateValidMoves(1);
-        
-        deepCopyPosition(moves, tempGameGrid.getAllValidMoves());
-
-        System.out.println("White's Valid moves: " + tempGameGrid.getAllValidMoves());
-        
-        for (int i = 0; i < moves.size(); i++) {
-            tempGameGrid.playMove(moves.get(i), 1);
-            tempGameGrid.updateValidMoves(2);
-            int score = minimax(0, false, tempGameGrid);
-            
-            if (score > bestScore) {
-                bestScore = score;
-                bestMove = moves.get(i);
-            }
-        }
-        System.out.println("White's move: " + bestMove);
-        System.out.println("Black's valid move: " + gameGrid.getAllValidMoves());
-
-        return bestMove;
+        return minimax(0, true, gameGrid, 1).getSecond();
     }
     
     /**
@@ -59,53 +37,124 @@ public class AI {
      *
      * @return the score of best move
      */
-    private int minimax(int depth, boolean isMaximizing, GameGrid gameGrid) {
-        GameGrid temp = new GameGrid(new Position(0, 0), GlobalVar.WIDTH, GlobalVar.HEIGHT);
-        deepCopyGameGrid(temp, gameGrid);
-        int player;
-        if(isMaximizing) player = 1;
-        else player = 2; 
-        temp.updateValidMoves(player);
-        if (depth == 4 ) {
-            return staticWeightingScheme();
+
+     private Pair<Integer,Position> minimaxWithAB(int depth, boolean isMaximizing, GameGrid game, int player,int alpha,int beta) {
+        List<GameGrid> list = new ArrayList<>();
+
+        List<Position> p = new ArrayList<>();
+        game.updateValidMoves(player);
+        deepCopyPosition(p, game.getAllValidMoves());
+        //System.out.println( player + "'s Posssible Moves: " + p);
+
+        // System.out.println("white's valid move: " + p);
+        // System.out.println("");
+        for (int i = 0; i < p.size(); i++) {
+            GameGrid tempp = new GameGrid(new Position(0, 0), GlobalVar.WIDTH, GlobalVar.HEIGHT);
+            deepCopyGameGrid(tempp, game);
+            tempp.playMove(p.get(i), player);
+            list.add(tempp);
+        }
+        if (depth == 4) {
+            //System.out.println(p);
+            return new Pair<>(evaluate(game),null);
         }
         if (isMaximizing) {
-            int maxVal = Integer.MIN_VALUE;
-            
-            List<Position> moves = new ArrayList<>();
-            deepCopyPosition(moves, temp.getAllValidMoves());
-            // System.out.println("max " + moves);
-            for (int i = 0; i < moves.size(); i++) {
-                temp.playMove(moves.get(i),1);
-                temp.updateValidMoves(2);
+            int best = Integer.MIN_VALUE;
+            Position bestPos = null;
+            for (int i = 0; i < list.size(); i++) {
+                //System.out.println(p);
+                int val = minimaxWithAB(depth + 1, false, list.get(i), 2,alpha,beta).getFirst().intValue();
+                if (val > best) {
+                    best = val;
+                    bestPos = p.get(i);
+                }
+                alpha = Math.max(alpha, best);
+                if (alpha >= beta) {
+                    break;
+                }
+            }
+            return new Pair<>(best, bestPos);
+        }
+        else {
+            int best = Integer.MAX_VALUE;
+            Position bestPos = null;
+            for (int i = 0; i < list.size(); i++) {
+                int val = minimaxWithAB(depth + 1, true, list.get(i), 1,alpha,beta).getFirst().intValue();
+                if (val < best) {
+                    best = val;
+                    //bestGr = list.get(i);
+                    bestPos = p.get(i);
+                    //System.out.println("BestMove: " + bestPos);
+                    //bestMove = new Position(bestPos);
+                }
+                beta = Math.min(beta, best);
+                if (beta <= alpha) {
+                    break;
+                }
+            }
+            return new Pair<Integer,Position>(best, bestPos);
+        }
+    }
+    private Pair<Integer,Position> minimax(int depth, boolean isMaximizing, GameGrid game, int player) {
+        List<GameGrid> list = new ArrayList<>();
 
-                int val = minimax(depth + 1, false,gameGrid);
-                
-                maxVal = Math.max(maxVal, val);
+        List<Position> p = new ArrayList<>();
+        game.updateValidMoves(player);
+        deepCopyPosition(p, game.getAllValidMoves());
+        //System.out.println( player + "'s Posssible Moves: " + p);
+
+        // System.out.println("white's valid move: " + p);
+        // System.out.println("");
+        for (int i = 0; i < p.size(); i++) {
+            GameGrid tempp = new GameGrid(new Position(0, 0), GlobalVar.WIDTH, GlobalVar.HEIGHT);
+            deepCopyGameGrid(tempp, game);
+            tempp.playMove(p.get(i), player);
+            list.add(tempp);
+        }
+        if (depth == 4) {
+            //System.out.println(p);
+            return new Pair<>(evaluate(game),null);
+        }
+        if (isMaximizing) {
+            int best = Integer.MIN_VALUE;
+            Position bestPos = null;
+            for (int i = 0; i < list.size(); i++) {
+                //System.out.println(p);
+                int val = minimax(depth + 1, false, list.get(i), 2).getFirst().intValue();
+                if (val > best) {
+                    best = val;
+                    bestPos = p.get(i);
+                }
             }
-            return maxVal;
-        } else {
-            int minVal = Integer.MAX_VALUE;
-            
-            List<Position> moves = new ArrayList<>();
-            deepCopyPosition(moves, temp.getAllValidMoves());
-            // System.out.println("min " + moves);
-            for (int i = 0; i < moves.size(); i++) {
-                temp.playMove(moves.get(i), 2);
-                temp.updateValidMoves(1);
-                int val = minimax(depth + 1, true,gameGrid);
-                
-                minVal = Math.min(minVal, val);
+            return new Pair<>(best, bestPos);
+        }
+        else {
+            int best = Integer.MAX_VALUE;
+            Position bestPos = null;
+            for (int i = 0; i < list.size(); i++) {
+                int val = minimax(depth + 1, true, list.get(i), 1).getFirst().intValue();
+                if (val < best) {
+                    best = val;
+                    //bestGr = list.get(i);
+                    bestPos = p.get(i);
+                    //System.out.println("BestMove: " + bestPos);
+                    //bestMove = new Position(bestPos);
+                }
             }
-            return minVal;
+            return new Pair<Integer,Position>(best, bestPos);
         }
     }
 
     // public int evaluate() {
 
     // }
-
-    int staticWeightingScheme() {
+    int evaluate(GameGrid gr) {
+            return staticWeightingScheme(gr) 
+                    + cellDiff(gr)
+                    + calculateFrontierDiscScore(gr)
+                    + checkCorner(gr);
+        }
+    int staticWeightingScheme(GameGrid gamerGrid) {
         int[][] weightingMatrix = {
                 { 20, -3, 11, 8, 8, 11, -3, 20 },
                 { -3, -7, -4, 1, 1, -4, -7, -3 },
@@ -131,13 +180,83 @@ public class AI {
         return score;
     }
 
-    private int cornerBlock() {
-        int score = 0;
-        Grid[][] temp = gameGrid.getGrid();
+    private int cellDiff(GameGrid gr) {
+        int whitescore = 0;
+        int blackscore = 0;
         for (int i = 0; i < 8; i++) {
-            if (temp[0][i].getCellState() == 1) {
+            for (int j = 0; j < 8; j++) {
+                if (gr.getGrid()[i][j].getCellState() == 1) {
+                    whitescore++;
+                }
+                if (gr.getGrid()[i][j].getCellState() == 2) {
+                    blackscore++;
+                }
             }
         }
-        return 0;
+        if (whitescore > blackscore) {
+            return (whitescore / (whitescore + blackscore) * 100);
+        }
+        else{
+            return -(blackscore/(whitescore+blackscore)*100);
+        }
+    }
+
+
+    public int calculateFrontierDiscScore(GameGrid board) {
+        int score = 0;
+        int rows = board.getGrid().length;
+        int cols = board.getGrid()[0].length;
+
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                if (board.getGrid()[row][col].getCellState() != 0) {
+                    // Check if any of the 8 surrounding squares are empty
+                    boolean hasEmptyNeighbor = (row > 0 && board.getGrid()[row - 1][col].getCellState() == 0) ||
+                            (row < rows - 1 && board.getGrid()[row + 1][col].getCellState() == 0) ||
+                            (col > 0 && board.getGrid()[row][col - 1].getCellState() == 0) ||
+                            (col < cols - 1 && board.getGrid()[row][col + 1].getCellState() == 0) ||
+                            (row > 0 && col > 0 && board.getGrid()[row - 1][col - 1].getCellState() == 0) ||
+                            (row > 0 && col < cols - 1 && board.getGrid()[row - 1][col + 1].getCellState() == 0) ||
+                            (row < rows - 1 && col > 0 && board.getGrid()[row + 1][col - 1].getCellState() == 0) ||
+                            (row < rows - 1 && col < cols - 1 && board.getGrid()[row + 1][col + 1].getCellState() == 0);
+                    if (hasEmptyNeighbor) {
+                        if (board.getGrid()[row][col].getCellState() == 1) {
+                            score++;
+                        } else if (board.getGrid()[row][col].getCellState() == 2) {
+                            score--;
+                        }
+                    }
+                }
+            }
+        }
+
+        return score;
+    }
+    private int checkCorner(GameGrid gr) {
+        int score = 0;
+        Grid[][] board = gr.getGrid();
+        int row = board.length;
+        int col = board[0].length;
+        if (board[0][0].getCellState() == 1) {
+            score += 20;
+        } else if (board[0][0].getCellState() == 2) {
+            score -= 20;
+        }
+        if (board[0][col - 1].getCellState() == 1) {
+            score += 20;
+        } else if (board[0][col - 1].getCellState() == 2) {
+            score -= 20;
+        }
+        if (board[row - 1][0].getCellState() == 1) {
+            score += 20;
+        } else if (board[row - 1][0].getCellState() == 2) {
+            score -= 20;
+        }
+        if (board[row - 1][col - 1].getCellState() == 1) {
+            score += 20;
+        } else if (board[row - 1][col - 1].getCellState() == 2) {
+            score -= 20;
+        }
+        return score;
     }
 }
