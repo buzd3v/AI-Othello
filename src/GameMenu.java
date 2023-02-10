@@ -56,6 +56,7 @@ public class GameMenu extends JPanel  {
             public void actionPerformed(ActionEvent arg0) {
                 // TODO Auto-generated method stub
                 gameMap.restart();
+                gameMap.restart();
             }
 
         });
